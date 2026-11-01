@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090d16">
+  <title>Advanced PICS Monitor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">BLE · PASSIVE MONITOR</div>
+      <h1>Advanced PICS Monitor</h1>
+      <p class="sub">高度化PICS BLE受信・解析・シミュレーター</p>
+    </div>
+    <span class="pill safe">受信専用 / 制御機能なし</span>
+  </header>
+
+  <main>
+    <section class="notice">
+      <strong>⚠ 法令遵守・安全上の注意</strong>
+      <p>本ツールは研究・学習目的の受信・表示用です。交通信号設備への接続・操作・妨害は行わないでください。表示結果を道路横断や運転の安全判断に使用せず、現地の信号表示に従ってください。</p>
+    </section>
+
+    <nav class="tabs" aria-label="画面切替">
+      <button class="tab active" data-tab="monitor">BLEモニター</button>
+      <button class="tab" data-tab="simulator">シミュレーター</button>
+      <button class="tab" data-tab="intersections">交差点データ</button>
+      <button class="tab" data-tab="spec">データ仕様</button>
+    </nav>
+
+    <section id="monitor" class="panel active">
+      <div class="section-head">
+        <div><h2>BLE Advertisement Monitor</h2><p>ブラウザーが対応している場合に、周辺BLE広告を受信します。</p></div>
+        <div class="actions">
+          <button id="scanBtn" class="primary">デバイスを選択して受信</button>
+          <button id="stopBtn" class="secondary" disabled>停止</button>
+        </div>
+      </div>
+      <div id="browserNotice" class="hint">HTTPSまたはlocalhostが必要です。Web BluetoothとwatchAdvertisements()の対応状況はブラウザーに依存します。</div>
+      <div class="stats">
+        <div class="stat"><span>受信パケット</span><b id="packetCount">0</b></div>
+        <div class="stat"><span>最終RSSI</span><b id="lastRssi">—</b></div>
+        <div class="stat"><span>接続デバイス</span><b id="deviceName">未選択</b></div>
+        <div class="stat"><span>PICS候補</span><b id="picsCount">0</b></div>
+      </div>
+      <div class="grid two">
+        <article class="card">
+          <div class="card-head"><h3>受信ログ</h3><div class="actions"><button id="exportCsv" class="small">CSV出力</button><button id="clearLog" class="small">消去</button></div></div>
+          <div class="table-wrap"><table><thead><tr><th>時刻</th><th>種別</th><th>RSSI</th><th>長さ</th><th>判定</th></tr></thead><tbody id="packetRows"><tr><td colspan="5" class="empty">まだ受信していません</td></tr></tbody></table></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><h3>選択パケット詳細</h3><span id="detailTag" class="pill">待機中</span></div>
+          <div id="packetDetail" class="detail-empty">受信ログの行を選択すると詳細を表示します。</div>
+        </article>
+      </div>
+    </section>
+
+    <section id="simulator" class="panel">
+      <div class="section-head"><div><h2>PICS Packet Simulator</h2><p>実機を使わず、仕様表の項目構成をもとにした架空データで画面を確認します。</p></div></div>
+      <div class="notice amber"><strong>シミュレーション専用</strong><p>ここに表示される灯色・残り時間・位置情報はすべて架空のテスト値です。実際の交差点や信号状態を示しません。</p></div>
+      <div class="sim-controls">
+        <label>信号状態<select id="simState"><option value="1">青 (0x01)</option><option value="2">青点滅 (0x02)</option><option value="3">赤 (0x03)</option><option value="255">未知 (0xFF)</option></select></label>
+        <label>残り時間（秒）<input id="simSeconds" type="number" min="0" max="255" value="18"></label>
+        <label>交差点ID<input id="simCross" type="number" min="0" max="65535" value="1001"></label>
+        <button id="makeSim" class="primary">テストパケット生成</button>
+      </div>
+      <article class="card">
+        <div class="card-head"><h3>生成結果</h3><button id="simToLog" class="small" disabled>受信ログに追加（SIM）</button></div>
+        <pre id="simHex" class="hex">生成ボタンを押すと、テスト用HEXデータを表示します。</pre>
+        <div id="simDecoded" class="decoded"></div>
+      </article>
+    </section>
+
+    <section id="intersections" class="panel">
+      <div class="section-head"><div><h2>全国交差点データ</h2><p>提供CSVに含まれる交差点情報を検索します。座標はCSV記載値をそのまま表示します。</p></div></div>
+      <div class="searchline"><input id="crossSearch" type="search" placeholder="交差点名・市町村・都道府県・所在地で検索"><span id="crossCount" class="muted">読み込み中…</span></div>
+      <div class="table-wrap card"><table><thead><tr><th>都道府県</th><th>市町村</th><th>交差点名称</th><th>所在地</th><th>緯度</th><th>経度</th></tr></thead><tbody id="crossRows"><tr><td colspan="6" class="empty">CSVを読み込んでいます…</td></tr></tbody></table></div>
+      <p class="muted tiny">掲載情報の正確性・最新性・現地設備との対応関係は保証されません。</p>
+    </section>
+
+    <section id="spec" class="panel">
+      <div class="section-head"><div><h2>提供されたPICSデータ項目表</h2><p>picsinformation.csvを表示しています。未確定の項目を推測で補完しません。</p></div></div>
+      <div class="table-wrap card"><table><thead><tr><th>バイト位置</th><th>データ項目</th><th>データ型</th><th>値・構成案</th><th>解説</th></tr></thead><tbody id="specRows"><tr><td colspan="5" class="empty">読み込み中…</td></tr></tbody></table></div>
+      <div class="notice amber">
+        <strong>解析上の制約</strong>
+        <ul>
+          <li>Company IDは資料記載の0x09BD（十進数2493）を照合候補として使用します。</li>
+          <li>Web BluetoothのmanufacturerDataはCompany IDをMapキーとして別に返すため、値部分のバイト位置は資料全体の位置から2バイトずれる場合があります。</li>
+          <li>バージョン値、方向コードの意味、緯度・経度のスケール・符号化、予備領域の意味は資料だけでは確定できません。</li>
+          <li>したがって、位置座標の自動変換や未知フィールドの解釈は行いません。</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Advanced PICS Monitor · Passive observation only · Local browser processing</p>
+    <p><a href="README.md">README</a> · <a href="LEGAL_NOTICE.md">Legal Notice</a></p>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
