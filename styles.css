@@ -9,3 +9,11 @@ button{font:inherit}.app-shell{max-width:1500px;margin:auto;padding:0 34px}.topb
 footer{display:flex;justify-content:space-between;gap:15px;padding:22px 0 28px;color:#65768e;font:9px "DM Mono";letter-spacing:.2px}footer b{color:#4a637f;margin:0 5px}
 @media(max-width:950px){.content-grid{grid-template-columns:1fr}.detail-panel{min-height:0}.detail-empty{height:210px}.bottom-grid{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.app-shell{padding:0 15px}.topbar{height:65px}.top-meta{gap:8px}.version{display:none}.hero{align-items:flex-start;flex-direction:column;padding:28px 0 20px}.hero-actions{width:100%}.hero-actions .btn{flex:1}.stats-grid{gap:8px}.stat-card{padding:13px;min-height:102px}.stat-value{font-size:22px}.panel-heading{padding:14px}.panel-tools{gap:3px}.live-label{display:none}th,td{padding:10px 9px}.device-name{max-width:100px}.hex-preview{max-width:120px}.bottom-grid{gap:10px}footer{flex-direction:column;line-height:1.6}}
+.warning {
+  color: #ff4d4d;
+  font-weight: bold;
+  background: rgba(255, 77, 77, 0.1);
+  border-left: 4px solid #ff4d4d;
+  padding: 12px;
+  border-radius: 5px;
+}
