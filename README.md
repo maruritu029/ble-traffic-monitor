@@ -60,7 +60,7 @@ python -m http.server 8000
 
 その後 `http://localhost:8000` を開きます。
 
-# Legal Notice（法令遵守に関する注記）
+## Legal Notice（法令遵守に関する注記）
 
 本ソフトウェアは、BLE（Bluetooth Low Energy）Advertisementの技術的な受信・表示・解析を目的とした、研究・学習用ツールです。
 
