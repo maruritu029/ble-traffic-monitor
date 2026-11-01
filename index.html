@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080d18">
+  <meta name="description" content="ブラウザでBLEアドバタイズを受信・可視化する受信専用モニター">
+  <title>BLE Traffic Monitor</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="BLE Traffic Monitor home">
+        <span class="brand-mark">◉</span>
+        <span><strong>BLE TRAFFIC</strong><small>MONITOR / PASSIVE SCANNER</small></span>
+      </a>
+      <div class="top-meta">
+        <span class="secure"><i></i> BROWSER LOCAL</span>
+        <span class="version">WEB BUILD 1.0</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <div class="eyebrow"><span class="pulse-dot"></span> BLUETOOTH LOW ENERGY / ADVERTISEMENT</div>
+          <h1>Traffic <span>Monitor</span></h1>
+          <p class="subhead">BLEアドバタイズを受信して、パケットをリアルタイムに観測します。</p>
+        </div>
+        <div class="hero-actions">
+          <button id="startBtn" class="btn btn-primary"><span>▶</span> スキャン開始</button>
+          <button id="stopBtn" class="btn btn-secondary" disabled>■ 停止</button>
+        </div>
+      </section>
+
+      <div id="notice" class="notice info" role="status">
+        <span class="notice-icon">i</span>
+        <span id="noticeText">ChromeなどのWeb Bluetooth対応ブラウザで、HTTPS経由またはlocalhostから開いてください。</span>
+      </div>
+
+      <section class="stats-grid" aria-label="受信統計">
+        <article class="stat-card">
+          <div class="stat-label">SCAN STATUS <span class="stat-icon">◉</span></div>
+          <div class="stat-value" id="scanStatus">IDLE</div>
+          <div class="stat-foot" id="scanDetail">スキャン待機中</div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-label">PACKETS RECEIVED <span class="stat-icon">▤</span></div>
+          <div class="stat-value" id="packetCount">0</div>
+          <div class="stat-foot">このセッションで受信した広告イベント</div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-label">LAST RSSI <span class="stat-icon">⌁</span></div>
+          <div class="stat-value" id="lastRssi">— <small>dBm</small></div>
+          <div class="stat-foot" id="rssiFoot">受信強度は距離の正確な指標ではありません</div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-label">KNOWN DEVICES <span class="stat-icon">⌘</span></div>
+          <div class="stat-value" id="deviceCount">0</div>
+          <div class="stat-foot">このセッションで確認したデバイス数</div>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel packet-panel">
+          <div class="panel-heading">
+            <div><div class="eyebrow">LIVE FEED</div><h2>受信パケット</h2></div>
+            <div class="panel-tools">
+              <span class="live-label"><i></i> LIVE</span>
+              <button id="exportBtn" class="btn btn-small btn-secondary" disabled>↓ CSV出力</button>
+              <button id="clearBtn" class="btn btn-small btn-ghost">クリア</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>TIME</th><th>DEVICE</th><th>RSSI</th><th>TX POWER</th><th>DATA</th></tr></thead>
+              <tbody id="packetRows">
+                <tr class="empty-row"><td colspan="5"><div class="empty-state"><span>⌁</span><strong>まだパケットはありません</strong><small>「スキャン開始」からBLEデバイスを選択してください。</small></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer"><span id="feedSummary">0 events</span><span>行を選択すると詳細を表示</span></div>
+        </article>
+
+        <aside class="panel detail-panel">
+          <div class="panel-heading">
+            <div><div class="eyebrow">INSPECTOR</div><h2>パケット詳細</h2></div>
+            <span class="tag">READ ONLY</span>
+          </div>
+          <div id="detailEmpty" class="detail-empty">
+            <div class="empty-symbol">⌗</div>
+            <strong>パケットを選択</strong>
+            <p>受信ログの行を選択すると、広告データの詳細を表示します。</p>
+          </div>
+          <div id="detailContent" class="detail-content hidden">
+            <div class="detail-device">
+              <span class="device-avatar">⌘</span>
+              <div><strong id="detailName">Unknown device</strong><small id="detailId">—</small></div>
+            </div>
+            <div class="detail-metrics">
+              <div><small>RSSI</small><strong id="detailRssi">—</strong></div>
+              <div><small>TX POWER</small><strong id="detailTx">—</strong></div>
+              <div><small>TIME</small><strong id="detailTime">—</strong></div>
+            </div>
+            <div class="detail-section">
+              <div class="section-title">ADVERTISEMENT DATA <span id="dataLength">0 bytes</span></div>
+              <pre id="detailHex" class="hex-view">—</pre>
+            </div>
+            <div class="detail-section">
+              <div class="section-title">FIELDS</div>
+              <div id="detailFields" class="field-list"></div>
+            </div>
+            <div class="detail-section">
+              <div class="section-title">RAW JSON</div>
+              <pre id="detailJson" class="json-view"></pre>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="bottom-grid">
+        <article class="panel">
+          <div class="panel-heading"><div><div class="eyebrow">SIGNAL PROFILE</div><h2>受信強度の推移</h2></div><span class="tag">LAST 30 EVENTS</span></div>
+          <div class="chart-wrap"><canvas id="rssiChart" aria-label="RSSI history chart"></canvas><div id="chartEmpty" class="chart-empty">受信データを待っています</div></div>
+        </article>
+        <article class="panel decoder-panel">
+          <div class="panel-heading"><div><div class="eyebrow">PROTOCOL LAYER</div><h2>PICSデコーダー</h2></div><span class="tag tag-amber">SPEC REQUIRED</span></div>
+          <div class="decoder-placeholder">
+            <div class="decoder-icon">⌬</div>
+            <strong>プロトコル解析アダプター未設定</strong>
+            <p>高度化PICS固有フィールドの解析には、正式な広告ペイロード仕様（Company ID、Service UUID、フィールド定義、バイト順など）が必要です。</p>
+            <span class="muted-note">現在は標準的なBLE広告メタデータと生データを表示しています。PICS固有の信号状態は推測表示しません。</span>
+          </div>
+        </article>
+      </section>
+
+      <footer>
+        <span>BLE TRAFFIC MONITOR <b>·</b> PASSIVE OBSERVATION TOOL</span>
+        <span>データはこのブラウザ内で処理され、外部サーバーへ送信されません。</span>
+      </footer>
+    </main>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
